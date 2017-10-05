@@ -6,9 +6,10 @@ d = Packet_Parser()
 
 
 try:
+   while True:
     print("\n#######################################################################################################\n")
-    while True:
-        d.sniff_packet()
+
+    d.sniff_packet()
 except KeyboardInterrupt as e:
     print(e , " WTFF ")
 

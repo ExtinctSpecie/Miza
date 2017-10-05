@@ -2,6 +2,15 @@ import socket
 import struct
 from binascii import hexlify
 
+TAB_1 = '\t - '
+TAB_2 = '\t\t - '
+TAB_3 = '\t\t\t - '
+TAB_4 = '\t\t\t\t - '
+
+DATA_TAB_1 = '\t '
+DATA_TAB_2 = '\t\t '
+DATA_TAB_3 = '\t\t '
+DATA_TAB_4 = '\t\t '
 
 class Packet_Parser(object):
 
@@ -21,7 +30,6 @@ class Packet_Parser(object):
         self.packet_data = raw_data[14:]
 
         print('Source Mac Address ~~> {}\nDestination Mac Address ~~> {}\nEthernet Type ~~> {}'.format(self.src_address,self.dest_address,self.ether_type))
-        print("\n#######################################################################################################\n")
 
         return self.dest_address , self.src_address , self.ether_type , self.packet_data
 
@@ -35,15 +43,10 @@ class Packet_Parser(object):
 
         #print(proto[1::2])
     def ipv4_packet(self,byte_data):
-        #version_header = hexlify(struct.unpack('! 1s',byte_data[0]))
-        #version = version_header >> 4
-        #header_length = (version_header & 15) * 4
-        #ttl, proto, src, target = struct.unpack('! 8x BB 2x 4s 4s', byte_data[:20])
         ###
         #each byte is described by 2 hex numbers IP Header = 20 bytes
         #20*2 = 40
         ###
-        hex_data = hexlify(byte_data[:40])
         # version = hex_data[:4]
         # header_length = hex_data[4:8]
         # dscp = hex_data[8:14]
@@ -57,13 +60,46 @@ class Packet_Parser(object):
         # header_checksum = hex_data[80:96]
         # source_ip_address = hex_data[96:128]
         # destionation_ip_address = hex_data[128:160]
+        hex_data = hexlify(byte_data[:40])
+
+        version_and_header_length = hex_data[:2]
+
+
+        dscp_and_ecn = hex_data[2:4]
+
+        total_length = hex_data[4:8]
+
+        identification = hex_data[8:12]
+
+        flags_and_fragment_offset = hex_data[12:16]
+        time_to_live = ttl = hex_data[16:18]
+        protocol = hex_data[18:20]
+        header_checksum = hex_data[20:24]
         source_ip_address = hex_data[24:32]
         destionation_ip_address = hex_data[32:40]
-        ttl = hex_data[8:9]
 
+        print('Version And Header Length ~~> {}'
+              '\nDSCP And ECN ~~> {}'
+              '\nTotal Length ~~> {}'
+              '\nIdentification ~~> {}'
+              '\nFlags And Fragment Offset ~~> {}'
+              '\nTime To Live ~~> {}'
+              '\nProtocol ~~> {}'
+              '\nHeader Checksum ~~> {}'
+              '\nSource IP Address ~~> {}'
+              '\nDestination IP Address ~~> {}'.format(version_and_header_length,
+                        dscp_and_ecn,
+                        total_length,
+                        identification,
+                        flags_and_fragment_offset,
+                        time_to_live,
+                        protocol,
+                        header_checksum,
+                        self.dec_ip_address(source_ip_address),
+                        self.dec_ip_address(destionation_ip_address)))
 
-        self.dec_ip_address(source_ip_address)
-        print('\nSIP : {}\nDIP : {}\nTTL : {}\nDATA : {}'.format(source_ip_address,destionation_ip_address,ttl,hex_data))
+        #self.dec_ip_address(source_ip_address)
+        #print('\nSIP : {}\nDIP : {}\nTTL : {}\nDATA : {}'.format(source_ip_address,destionation_ip_address,ttl,hex_data))
         #print(version,header_length,ttl,proto,src,target)
     def stop_sniffing(self,byte_data):
 
@@ -72,11 +108,16 @@ class Packet_Parser(object):
     def dec_ip_address(self,hex_ip):
 
         pair_ip = [odd_char + even_char for odd_char, even_char in zip(hex_ip[::2], hex_ip[1::2])]
-        print([int(x,16) for x in pair_ip])
-        dec_ip = [x for x in hex_ip[::1]]
-        print(dec_ip)
+        #print()
+        #dec_ip = [x for x in hex_ip[::1]]
+        #print(dec_ip)
+        decimal_ip = [int(x,16) for x in pair_ip]
+        string_ip = ''
 
-        #return ':'.join( (odd_char + even_char for odd_char, even_char in zip(hex_ip[::2], hex_ip[1::2]) for int(odd_char + even_char,16) in odd_char+even_char) )
+        for element in decimal_ip:
+            string_ip += str(element) + ':'
+
+        return string_ip[:-1]
 
 
     def format_mac_address(self, hex_mac):
